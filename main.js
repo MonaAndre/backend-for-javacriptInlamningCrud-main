@@ -5,6 +5,8 @@ const cors = require('cors')
 const bodyParser = require('body-parser')
 const { sequelize, Players } = require('./models')
 const migrationhelper = require('./migrationhelper')
+const {check, validationResult} = require('express-validator')
+const { validateCreatePlayer } = require('./validators/playerValidators')
 
 app.use(cors())
 app.use(bodyParser.json())
@@ -46,7 +48,7 @@ app.get('/api/players/:playerId', async (req, res) => {
 });
 
 
-app.post('/api/players', async (req, res) => {
+app.post('/api/players', validateCreatePlayer, async (req, res) => {
 
     const { name, jersey, position, } = req.body
     try {
@@ -88,7 +90,7 @@ app.delete('/api/players/:playerId',async (req,res)=>{
     }
 });
 
-app.put('/api/players/:playerId', async (req, res) => {
+app.put('/api/players/:playerId',validateCreatePlayer, async (req, res) => {
     const playerId = req.params.playerId
     const { name, jersey, position } = req.body
 

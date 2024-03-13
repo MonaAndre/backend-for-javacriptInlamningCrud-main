@@ -11,18 +11,18 @@ Content-Type: application/json; charset=utf-8
 {
     "name": "Mona",
     "jersey": 1,
-    "position": "bla"
+    "position": "Forward"
 }
 
 ### Update 
-PUT http://localhost:3000/api/players/1
+PUT http://localhost:3000/api/players/17
 Content-Type: application/json; charset=utf-8
 
 {
     "name": "Mona",
     "jersey": 1,
-    "position": "bla"
+    "position": "Forward"
 }
 
 ### Delete
-DELETE  http://localhost:3000/api/players/2
+DELETE  http://localhost:3000/api/players/12
