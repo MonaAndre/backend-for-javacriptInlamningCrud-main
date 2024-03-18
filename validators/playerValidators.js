@@ -37,6 +37,5 @@ const validateCreatePlayer = [
 ];
 
 module.exports = {
-    //validateLoginUser,
     validateCreatePlayer
 }

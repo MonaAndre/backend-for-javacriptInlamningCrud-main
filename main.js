@@ -3,28 +3,48 @@ const app = express()
 const port = 3000 // "Radiofrekvens"
 const cors = require('cors')
 const bodyParser = require('body-parser')
+const { Op } = require('sequelize')
 const { sequelize, Players } = require('./models')
 const migrationhelper = require('./migrationhelper')
-const {check, validationResult} = require('express-validator')
+const { check, validationResult } = require('express-validator')
 const { validateCreatePlayer } = require('./validators/playerValidators')
 
 app.use(cors())
 app.use(bodyParser.json())
 
-
-
-
 app.get('/api/players', async (req, res) => {
-    let players = await Players.findAll()
-    let result = players.map(p => ({
-        id: p.id,
-        name: p.name,
-        jersey: p.jersey,
-        position: p.position
-    }))
-    res.json(result)
-});
 
+    const sortCol = req.query.sortCol || 'id';
+    const sortOrder = req.query.sortOrder || 'asc';
+    const q = req.query.q || '';
+    const offset = Number(req.query.offset || 0);
+    const limit = Number(req.query.limit || 20);
+    const players = await Players.findAndCountAll({
+        where: {
+            name: { [Op.like]: '%' + q + '%' }
+        },
+        order: [
+            [sortCol, sortOrder]
+        ],
+
+        offset: offset,
+        limit: limit
+
+    })
+    const total = players.count
+    const result = players.rows.map(p => {
+        return {
+            id: p.id,
+            name: p.name,
+            jersey: p.jersey,
+            position: p.position
+        }
+    })
+    return res.json({
+        total,
+        result
+    })
+});
 
 app.get('/api/players/:playerId', async (req, res) => {
     console.log(req.params.playerId)
@@ -47,50 +67,33 @@ app.get('/api/players/:playerId', async (req, res) => {
     }
 });
 
-
 app.post('/api/players', validateCreatePlayer, async (req, res) => {
 
     const { name, jersey, position, } = req.body
     try {
         const player = await Players.create({ name, jersey, position })
-
-        return res.json(player)
+        res.status(201).send('Created')
     } catch (err) {
         console.log(err)
         return res.status(500).json(err)
     }
-
-    res.status(201).send('Created')
 });
 
-
-
-// app.delete('/api/players/:anvId', (req, res) => {
-//     console.log(req.params.anvId)
-//     let p = players.find(player => player.id == req.params.anvId)
-//     // 404???
-//     if (p == undefined) {
-//         res.status(404).send('Finns inte')
-//     }
-//     players.splice(players.indexOf(p), 1)
-//     res.status(204).send('Deleted')
-// });
-
-app.delete('/api/players/:playerId',async (req,res)=>{
+app.delete('/api/players/:playerId', async (req, res) => {
     const playerId = req.params.playerId
     try {
-      const player = await Players.findOne({ where: { id:playerId } })
-  
-      await player.destroy()
-  
-      return res.json({ message: 'Player deleted!' })
+        const player = await Players.findOne({ where: { id: playerId } })
+
+        await player.destroy()
+
+        return res.json({ message: 'Player deleted!' })
     } catch (err) {
-      console.log(err)
-      return res.status(500).json({ error: 'Something went wrong' })
+        console.log(err)
+        return res.status(500).json({ error: 'Something went wrong' })
     }
 });
 
-app.put('/api/players/:playerId',validateCreatePlayer, async (req, res) => {
+app.put('/api/players/:playerId', validateCreatePlayer, async (req, res) => {
     const playerId = req.params.playerId
     const { name, jersey, position } = req.body
 
@@ -103,13 +106,12 @@ app.put('/api/players/:playerId',validateCreatePlayer, async (req, res) => {
         player.position = position
 
         await player.save()
-
         return res.status(204).json({ err: 'ok' })
+
     } catch (err) {
         console.log(err)
         return res.status(500).json({ error: 'Something went wrong' })
     }
-
 });
 
 app.listen(port, async () => {
@@ -117,5 +119,3 @@ app.listen(port, async () => {
     await sequelize.authenticate()
     console.log(`Example app listening2 on port ${port}`)
 })
-
-
